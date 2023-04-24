@@ -1,0 +1,31 @@
+{
+  "name": "server",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx --watch src/server.ts",
+    "build": "npx tsc src/server.ts",
+    "knex": "node --loader tsx ./node_modules/knex/bin/cli.js --knexfile ./knexfile.ts",
+    "migrate": "knex -- migrate:latest",
+    "lint": "eslint src --ext .ts --fix",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^8.3.0",
+    "dotenv": "^16.0.3",
+    "fastify": "^4.15.0",
+    "jsonwebtoken": "^9.0.0",
+    "knex": "^2.4.2",
+    "supertest": "^6.3.3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.1",
+    "@types/node": "^18.15.11",
+    "@types/supertest": "^2.0.12",
+    "sqlite3": "^5.1.6",
+    "tsx": "^3.12.6",
+    "typescript": "^5.0.3",
+    "vitest": "^0.30.1"
+  }
+}
