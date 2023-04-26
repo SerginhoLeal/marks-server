@@ -8,7 +8,7 @@ import { CreateProductsProps } from "./interface";
 
 export const Products = {
   get: async(app: FastifyInstance) => app.get('/products', async (request, reply) => {
-    const transactions = await knex('products')
+    const products = await knex('products')
       .select('*')
       .then(res => res.map(fuck => ({
           ...fuck,
@@ -19,11 +19,11 @@ export const Products = {
         })
       ))
 
-    return { transactions };
+    return { products };
   }),
 
   post: async(app: FastifyInstance) =>
-    app.post( '/products', { preHandler: [checkSessionIdExists] }, async(request, reply) => {
+    app.post('/products', { preHandler: [checkSessionIdExists] }, async(request, reply) => {
       const { title, price, material, description, color, image, gender, category } = request.body as CreateProductsProps;
       const { session_id } = request.cookies;
 
