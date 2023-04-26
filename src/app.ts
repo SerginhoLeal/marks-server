@@ -8,3 +8,4 @@ export const app = fastify();
 app.register(fastifyCookie);
 app.register(Routes.products, { prefix: 'api' });
 app.register(Routes.users, { prefix: 'api' });
+app.register(Routes.payment, { prefix: 'api' });
