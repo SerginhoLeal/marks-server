@@ -18,5 +18,18 @@ declare module 'knex/types/tables' {
       sales?: Array<SalesProps>;
       comments?: Array<CommentsProps>;
     };
+    users: {
+      id: string;
+      name: string;
+      email: string;
+      password: string;
+      cpf: number;
+    };
+    payment: {
+      id: string;
+      pix: object;
+      user: object;
+      product: object;
+    };
   }
 }
