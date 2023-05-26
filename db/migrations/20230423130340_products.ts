@@ -4,6 +4,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('products', (table) => {
     table.uuid('id').primary()
     table.text('title').notNullable()
+    table.text('search_code').notNullable()
     table.text('description').notNullable()
     table.json('gender').notNullable()
     table.text('material').notNullable()

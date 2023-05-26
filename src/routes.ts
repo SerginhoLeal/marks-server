@@ -18,5 +18,6 @@ export const Routes = {
   payment: async(app: FastifyInstance) => {
     await Payment.get(app)
     await Payment.post(app)
+    await Payment.confirm(app)
   }
 };

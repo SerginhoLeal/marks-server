@@ -7,29 +7,30 @@ import { checkSessionIdExists, checkTokenAuthExist } from "../../middleware";
 import { CreateProductsProps } from "./interface";
 
 export const Products = {
-  get: async(app: FastifyInstance) => app.get('/products', async (request, reply) => {
+  get: async(app: FastifyInstance) => app.get('/products', { preHandler: [checkTokenAuthExist] }, async (request, reply) => {
     const products = await knex('products')
       .select('*')
-      .then(res => res.map(fuck => ({
-          ...fuck,
-          gender: JSON.parse(fuck.gender),
-          color: JSON.parse(fuck.color),
-          category: JSON.parse(fuck.category),
-          image: JSON.parse(fuck.image),
+      .then(res => res.map(data => ({
+          ...data,
+          gender: JSON.parse(data.gender),
+          color: JSON.parse(data.color),
+          category: JSON.parse(data.category),
+          image: JSON.parse(data.image),
         })
       ))
 
-    return { products };
+    return products;
   }),
 
   post: async(app: FastifyInstance) =>
-    app.post('/products', { preHandler: [checkSessionIdExists] }, async(request, reply) => {
+    app.post('/products', { preHandler: [checkSessionIdExists, checkTokenAuthExist] }, async(request, reply) => {
       const { title, price, material, description, color, image, gender, category } = request.body as CreateProductsProps;
-      const { session_id } = request.cookies;
+      const { session_id, token } = request.cookies;
 
       return knex('products').insert({
         id: crypto.randomUUID(),
-        user_id: session_id,
+        user_id: request.user_id,
+        search_code: '00001',
         title,
         price,
         color: JSON.stringify(color),
@@ -45,7 +46,7 @@ export const Products = {
     }),
 
   update: async(app: FastifyInstance) =>
-    app.put('/products', { preHandler: [checkSessionIdExists] }, async(request, reply) => {
+    app.put('/products', { preHandler: [checkSessionIdExists, checkTokenAuthExist] }, async(request, reply) => {
       const { id } = request.query as { id: string };
       const update = request.body as CreateProductsProps;
 

@@ -5,6 +5,11 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('id').primary()
     table.json('product')
     table.json('user')
+    table.text('status')
+    table.text('code_pix')
+    table.text('code_user')
+    table.text('code_product')
+    table.timestamp('create_at').defaultTo(knex.fn.now()).notNullable()
   })
 }
 

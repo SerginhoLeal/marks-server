@@ -6,8 +6,6 @@ import { knex } from "../../database";
 import { generateToken } from "../../middleware";
 import { CreateUserProps } from "./interface";
 
-const JWT = process.env.JWT;
-
 export const User = {
   login: async(app: FastifyInstance) => app.post('/login-user', async(request, reply) => {
     const { cpf, password } = request.body as CreateUserProps;
@@ -15,18 +13,14 @@ export const User = {
     return knex('users')
       .where({ cpf, password })
       .first()
-      .then(response =>
+      .then((response: any) =>
         reply
         .status(201)
-        .cookie('session_id', response.id, { path: '/', maxAge: 1000 * 60 * 60 * 24 * 7 })
-        .cookie('token', generateToken({ id: JWT }), { path: '/', maxAge: 1000 * 60 * 60 * 24 * 1 })
-        .send()
+        // .cookie('session_id', response.id, { path: '/', maxAge: 1000 * 60 * 60 * 24 * 7 })
+        .cookie('token', generateToken({ id: response.id }))
+        .send(response)
       )
-      .catch(err =>
-        reply.status(400).send({
-          error: err
-        })
-      )
+      .catch(err => reply.status(400).send({ error: err }))
   }),
   create: async(app: FastifyInstance) => app.post('/register-user', async(request, reply) => {
     const { name, email, password, repeat_password, cpf } = request.body as CreateUserProps;
