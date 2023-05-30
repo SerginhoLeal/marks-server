@@ -12,6 +12,9 @@
     - the user will have access ***logged*** or **not *logged***.
     - payment will only be made with a ***logged*** in user.
 
+  - **Panel**
+    - Apenas o proprietário poderá aprovar ou recusar.
+
 ## Private Routes
 
 ## Public Routes
