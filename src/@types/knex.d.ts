@@ -10,6 +10,7 @@ declare module 'knex/types/tables' {
       material: string;
       create_at: string;
       description: string;
+      search_code: string;
       session_id: string;
       color: string;
       image: string;
@@ -17,6 +18,22 @@ declare module 'knex/types/tables' {
       category: string;
       sales?: Array<SalesProps>;
       comments?: Array<CommentsProps>;
+    };
+    users: {
+      id: string;
+      name: string;
+      email: string;
+      password: string;
+      cpf: number;
+    };
+    payment: {
+      id: string;
+      user: object;
+      status: string;
+      product: object;
+      code_pix: string;
+      code_user: string;
+      code_product: string;
     };
   }
 }
