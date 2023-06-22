@@ -28,6 +28,5 @@ export function checkTokenAuthExist(req: FastifyRequest, reply: FastifyReply, ne
   })
 }
 
-export const generateToken = (params = {}) => {
-  return jwt.sign(params, JWT, { expiresIn: 60 * 60 * 24 * 1 });
-};
+export const generateToken = (params = {}) =>
+  jwt.sign(params, JWT, { expiresIn: 60 * 60 * 24 * 1 });

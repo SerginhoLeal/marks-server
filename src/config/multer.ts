@@ -1,6 +1,8 @@
+import cloudinary from 'cloudinary';
 import multer from 'fastify-multer';
 import path from 'path';
 import crypto from "node:crypto";
+import { change } from '../utils';
 
 const storageTypes = {
   local: multer.diskStorage({
@@ -17,26 +19,23 @@ const storageTypes = {
       });
     }
   }),
-  // s3: multerS3({
-  //   s3: new aws.S3(),
-  //   bucket:`cotemiglessons`,
-  //   contentType: multerS3.AUTO_CONTENT_TYPE,
-  //   acl:'public-read',
-  //   key: (req, file, cb) => {
-  //     crypto.randomBytes(16, (err, hash) =>{
-  //       if(err) cb(err);
+  cloud: multer.diskStorage({
+    filename: (req, file, cb) => {
+      crypto.randomBytes(16, (err, hash) => {
+        if (err) cb(err);
+        
+        file.key = `${hash.toString("hex")}-${file.originalname}`;
+        file.mimetype = file.mimetype.slice(0, 5);
 
-  //       const fileName = `${hash.toString('hex')}-${file.originalname}`;
-
-  //       cb(null, fileName);
-  //     });
-  //   },
-  // }),
+        cb(null, file.key);
+      });
+    }
+  })
 };
 
-module.exports = {
-  dest: path.resolve(__dirname, "..", "..", "tmp", "uploads"),
-  storage: storageTypes['local'],
+export default multer({
+  // dest: path.resolve(__dirname, "..", "..", "tmp", "uploads"),
+  storage: storageTypes['cloud'],
   limits: {
     fileSize: 1000 * 1024 * 1024
   },
@@ -47,7 +46,8 @@ module.exports = {
       "image/png",
       "image/gif",
       "image/jpg",
-      "video/mp4"
+      "video/mp4",
+      "video/webm",
     ];
 
     if (allowedMimes.includes(file.mimetype)) {
@@ -56,4 +56,4 @@ module.exports = {
       cb(new Error("Invalid file type."));
     }
   }
-};
+});
