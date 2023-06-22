@@ -1,14 +1,14 @@
-import { FastifyInstance } from "fastify";
-
-import crypto from 'node:crypto';
-
-import multer from 'fastify-multer';
+import { FastifyInstance, FastifyRequest } from "fastify";
+import cloudinary from 'cloudinary';
+import crypto from "node:crypto";
 
 import { knex } from "../../database";
-import { checkSessionIdExists, checkTokenAuthExist } from "../../middleware";
-import { CreateProductsProps } from "./interface";
 
-const multerConfig = require('../../config/multer');
+import { checkSessionIdExists, checkTokenAuthExist } from "../../middleware";
+import { CreateProductsProps, CloudProps } from "./interface";
+
+import storageTypes from '../../config/multer';
+import { change } from "../../utils";
 
 export const Products = {
   get: async(app: FastifyInstance) => app.get('/products', { preHandler: [checkTokenAuthExist] }, async (request, reply) => {
@@ -16,52 +16,66 @@ export const Products = {
       .select('*')
       .then(res => res.map(data => ({
           ...data,
+          material: JSON.parse(data.material),
+          card: JSON.parse(data.card),
           gender: JSON.parse(data.gender),
           color: JSON.parse(data.color),
           category: JSON.parse(data.category),
-          image: JSON.parse(data.image),
+          files: JSON.parse(data.files),
         })
       ))
 
     return products;
   }),
 
-  post: async(app: FastifyInstance) =>
-    app.post(
-      '/products',
-      {
-        preHandler: [
-          checkSessionIdExists,
-          checkTokenAuthExist,
-          // multer(multerConfig).single('file')
-        ]
-      },
-    async(request, reply) => {
-      const { title, price, material, description, color, image, gender, category } = request.body as CreateProductsProps;
-      const { session_id, token } = request.cookies;
-      // const file = request.file;
+  post: async(app: FastifyInstance) => {
+    const storage = storageTypes.fields([{ name: 'files', maxCount: 5 }, { name: 'file_banner', maxCount: 1 }]);
 
-      let array_image = [];
+    app.post('/product', {preHandler: [ checkTokenAuthExist, storage ]}, async(request, reply) => {
+      const { title, price, material, description, color, gender, category, card } = request.body as CreateProductsProps;
+      const { files, file_banner } = request.files;
+      const title_replace = title.replace(' ', '_').toLocaleLowerCase();
 
-      // return knex('products').insert({
-      //   id: crypto.randomUUID(),
-      //   user_id: request.user_id,
-      //   search_code: '00001',
-      //   title,
-      //   price,
-      //   color: JSON.stringify(color),
-      //   image: JSON.stringify(image),
-      //   gender: JSON.stringify(gender),
-      //   category: JSON.stringify(category),
-      //   material,
-      //   session_id,
-      //   description,
-      // })
-      //   .then(() => reply.status(201).send())
-      //   .catch((err) => reply.status(400).send({ error: err }))
+      let cloudArray: Array<CloudProps> = [];
 
-      return request;
-    }),
+      for (const key in files) {
+        if (Object.prototype.hasOwnProperty.call(files, key)) {
+          const element = files[key];
+          const upload = await cloudinary.v2.uploader.upload(element.path, {
+            cloud_name: process.env.CLOUDNAME,
+            api_key: process.env.APIKEY,
+            api_secret: process.env.GLzoiVYLmZr2FX2Yruum5FuMyfk,
+            resource_type: element.mimetype,
+            // public_id: `pegi_eighteen/${title_replace}/${element.key}`,
+            folder: `pegi_eighteen/${title_replace}`,
+            overwrite: true,
+          });
+
+          cloudArray.push(upload);
+        };
+      };
+
+      const filter_files = cloudArray.map(file => ({
+        type: file.resource_type,
+        file: file.url,
+        preview: change(file.resource_type, file.url),
+        width: file.width,
+        height: file.height,
+      }));
+
+      return knex('products').insert({
+        id: crypto.randomUUID(),
+        user_id: request.user_id,
+        title, description, material, price, gender, color, category, card,
+        file_banner: filter_files[0].file,
+        files: JSON.stringify(filter_files),
+        comments: [],
+        sales: []
+      })
+        .then(() => reply.status(201).send({ message: 'Register Successful' }))
+        .catch((err) => reply.status(400).send({ error: err }))
+    })
+  },
 
   update: async(app: FastifyInstance) =>
     app.put('/products', { preHandler: [checkSessionIdExists, checkTokenAuthExist] }, async(request, reply) => {
@@ -73,35 +87,15 @@ export const Products = {
         .update({ ...update })
         .then(() => reply.status(201).send())
         .catch((err) => reply.status(400).send({ error: err }))
-    }),
+  }),
 
   delete: async(app: FastifyInstance) =>
-    app.delete('/products', { preHandler: [checkSessionIdExists] }, async(request, reply) => {
+    app.delete('/product', { preHandler: [checkTokenAuthExist] }, async(request, reply) => {
       const { id } = request.query as { id: string };
       return knex('products')
-        .where({ id })
+        // .where({ id })
         .del()
         .then(() => reply.status(201).send())
         .catch((err) => reply.status(400).send({ error: err }))
-    })
-}
-
-/*
-
-{
-	"title": "Corrente Cuban Miami 3.0 Ice Cravejada (+ Presente: Pulseira Cuban Miami) 12mm",
-	"description": "Colar Corrente Borboleta aço inox, uma unidade.",
-	"price": 25.00,
-	"color": ["rosa", "preto"],
-	"image" : [
-		"/image/upload/v1682166752/cut_it/TAM_ngzjkx.webp",
-		"/image/upload/v1682166762/cut_it/TAM_hs8kwk.webp",
-		"/image/upload/v1682166773/cut_it/TAM_qhsyfm.webp",
-		"/image/upload/v1682166778/cut_it/TAM_h38cfn.jpgs"
-	],
-	"gender": ["M", "F"],
-	"material": "Zircônia",
-	"category": ["anel", "alianca"]
-}
-
-*/
+  }),
+};
